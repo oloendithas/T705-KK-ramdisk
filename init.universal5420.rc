@@ -11,10 +11,10 @@ on init
     mkdir /mnt/media_rw/UsbDriveD 0700 media_rw media_rw
     mkdir /mnt/media_rw/UsbDriveE 0700 media_rw media_rw
     mkdir /mnt/media_rw/UsbDriveF 0700 media_rw media_rw
-    
+
     # See storage config details at http://source.android.com/tech/storage/
     mkdir /mnt/shell/emulated 0700 shell shell
-    mkdir /storage/emulated 0555 root root    
+    mkdir /storage/emulated 0555 root root
 
     export EXTERNAL_STORAGE /storage/emulated/legacy
     export EMULATED_STORAGE_SOURCE /mnt/shell/emulated
@@ -36,7 +36,7 @@ on init
     symlink /storage/UsbDriveF /mnt/UsbDriveF
 
     export SECONDARY_STORAGE /storage/extSdCard
-    
+
     mkdir /storage/extSdCard 0700 root root
     mkdir /storage/UsbDriveA 0700 root root
     mkdir /storage/UsbDriveB 0700 root root
@@ -46,6 +46,9 @@ on init
     mkdir /storage/UsbDriveF 0700 root root
 
     mkdir /efs 0771 radio system
+    symlink /dev/block/mmcblk0p13 /dev/mbin0
+    restorecon /dev/mbin0
+    symlink /sys/devices/platform/s5p-ehci/ehci_power /dev/ehci_power
 
     #Private Mode
     mkdir /mnt/shell/privatemode 0700 system system
@@ -77,27 +80,25 @@ on post-fs-data
     mkdir /efs/drm 0700 drm system
     mkdir /efs/drm/playready 0775 drm system
 
-
 #Private Mode
     mkdir /data/privatemode 0770 system system
     chown system system /data/privatemode
     restorecon /data/privatemode
 
 # Bluetooth dhcpcd config
-service dhcpcd_bt-pan /system/bin/dhcpcd -ABKL
-    class main
-	disabled
-	oneshot
+#service dhcpcd_bt-pan /system/bin/dhcpcd -ABKL
+#    class main
+#	disabled
+#	oneshot
 
-service iprenew_bt-pan /system/bin/dhcpcd -n
-    class late_start
-	disabled
-	oneshot
+#service iprenew_bt-pan /system/bin/dhcpcd -n
+#    class late_start
+#	disabled
+#	oneshot
 
 on boot
     mount debugfs /sys/kernel/debug /sys/kernel/debug
-    setprop ro.radio.noril yes
-    stop ril-daemon
+    #setprop ro.radio.noril yes
 
     # Reduce reserved lowmem from ~48MB to ~12MB
     write /proc/sys/vm/lowmem_reserve_ratio "128 128"
@@ -109,34 +110,6 @@ on boot
     setprop ro.build.product universal_5420
     setprop ro.product.device universal_5420
 #    chmod 0666 /dev/pvrsrvkm
-
-# mobicore
-    mkdir /data/app/mcRegistry 0775 system system
-    chmod 0700 /dev/mobicore
-    chmod 0666 /dev/mobicore-user
-    chmod 0660 /dev/s5p-smem    
-    chown system system /dev/mobicore
-    chown radio system /dev/mobicore-user
-    chown system system /dev/s5p-smem   
-
-# DRK permission
-    mkdir /efs/prov 0770 radio system
-    chown radio system /efs/prov_data
-    chmod 0770 /efs/prov_data
-    chown radio system /efs/prov_data/dev_root
-    chmod 0770 /efs/prov_data/dev_root
-    chown radio system /efs/prov_data/knox
-    chmod 0770 /efs/prov_data/knox
-    chown radio system /efs/prov_data/dev_root/dev_root.dat
-    chmod 0640 /efs/prov_data/dev_root/dev_root.dat
-    chown radio system /efs/prov/libdevkm.lock
-    chmod 0660 /efs/prov/libdevkm.lock
-    write /efs/prov/ffffffff00000000000000000000000c.tlbin 0
-    chown radio system /efs/prov/ffffffff00000000000000000000000c.tlbin
-    chmod 0660 /efs/prov/ffffffff00000000000000000000000c.tlbin
-
-# CS socket
-    mkdir /dev/socket/cs_socket 0770 system system
 
 # Permissions for gpio_keys
     chown system radio /sys/class/sec/sec_key/wakeup_keys
@@ -214,6 +187,13 @@ on boot
     chown system radio /sys/class/sensors/temphumidity_sensor/name
     chown system radio /sys/class/sensors/temphumidity_sensor/engine_ver
     chown system radio /sys/class/sensors/temphumidity_sensor/send_accuracy
+# Grip_sensor
+    chown system radio /sys/class/sensors/grip_sensor/vendor
+    chown system radio /sys/class/sensors/grip_sensor/name
+    chown system radio /sys/class/sensors/grip_sensor/raw_data
+    chown system radio /sys/class/sensors/grip_sensor/calibration
+    chown system radio /sys/class/sensors/grip_sensor/threshold
+    chown system radio /sys/class/sensors/grip_sensor/onoff
 
 # Permissions Camera
     chown system radio /sys/class/camera/rear/rear_camfw
@@ -231,6 +211,34 @@ on boot
 
 # SSWAP
     write /proc/sys/vm/swappiness 130
+
+# mobicore
+    mkdir /data/app/mcRegistry 0775 system system
+    chmod 0700 /dev/mobicore
+    chmod 0666 /dev/mobicore-user
+    chmod 0660 /dev/s5p-smem    
+    chown system system /dev/mobicore
+    chown radio system /dev/mobicore-user
+    chown system system /dev/s5p-smem   
+
+# DRK permission
+    mkdir /efs/prov 0770 radio system
+    chown radio system /efs/prov_data
+    chmod 0770 /efs/prov_data
+    chown radio system /efs/prov_data/dev_root
+    chmod 0770 /efs/prov_data/dev_root
+    chown radio system /efs/prov_data/knox
+    chmod 0770 /efs/prov_data/knox
+    chown radio system /efs/prov_data/dev_root/dev_root.dat
+    chmod 0640 /efs/prov_data/dev_root/dev_root.dat
+    chown radio system /efs/prov/libdevkm.lock
+    chmod 0660 /efs/prov/libdevkm.lock
+    write /efs/prov/ffffffff00000000000000000000000c.tlbin 0
+    chown radio system /efs/prov/ffffffff00000000000000000000000c.tlbin
+    chmod 0660 /efs/prov/ffffffff00000000000000000000000c.tlbin
+
+# CS socket
+    mkdir /dev/socket/cs_socket 0770 system system
 
 # PMS DVFS
     chown radio system /sys/power/cpufreq_table
@@ -328,21 +336,18 @@ on boot
     chown radio system /sys/class/secgpio_check/secgpio_check_all/gpiosleep_check
     chown radio system /sys/class/secgpio_check/secgpio_check_all/checked_sleepGPIO
 
-# Permissions for Barcode Emul
-    chown system radio /sys/class/sec/sec_barcode_emul/barcode_send
-    chown system radio /sys/class/sec/sec_barcode_emul/barcode_ver_check
-    chown system radio /sys/class/sec/sec_barcode_emul/barcode_led_status
-
 on fs
+    mount_all /fstab.universal5420
+    setprop ro.crypto.fuse_sdcard true
 
 # Support Preload install apks
     mkdir /preload 0771 system system
 
-    mount_all /fstab.universal5420
-    setprop ro.crypto.fuse_sdcard true
-
     chown radio system /efs
     chmod 0771 /efs
+    chown radio radio /sys/devices/virtual/misc/multipdp/waketime
+    chmod 0660 /sys/devices/virtual/misc/umts_dm0/dm_state
+    chown radio system /sys/devices/virtual/misc/umts_dm0/dm_state
 
 #For Absolute Persistence Partition 
     mkdir /persdata 0755 system system 
@@ -356,7 +361,6 @@ on fs
     chmod 0755 /persdata 
     chown system system /persdata/absolute 
     chmod 0750 /persdata/absolute
-
 
 # Permissions for backlight
     chown system system /sys/class/backlight/panel/brightness
@@ -403,11 +407,12 @@ on fs
 # Fingerprint
     mkdir /dev/validity 0770 system system
 
+
 # virtual sdcard daemon running as media_rw (1023)
 service sdcard /system/bin/sdcard -u 1023 -g 1023 -l -r /data/media /mnt/shell/emulated
     class late_start
     oneshot
-    
+
 service fuse_extSdCard /system/bin/sdcard -u 1023 -g 1023 -w 1023 -d -f /mnt/media_rw/extSdCard /storage/extSdCard
     class late_start
     disabled
@@ -449,6 +454,12 @@ service watchdogd /sbin/watchdogd 10 20
     seclabel u:r:watchdogd:s0
     disabled
 
+service cpboot-daemon /sbin/cbd -d -txmm7160 -bh -mh -p13
+    class main
+    user root
+    group radio cache inet misc audio sdcard_rw log sdcard_r shell
+#    seclabel u:r:cbd:s0
+
 # Bluetooth LE 2 wired Test
 service LE_dut_cmd_on /system/bin/bttestintf enable
     group bluetooth net_bt_admin
@@ -475,7 +486,7 @@ service dhcpcd_eth0 /system/bin/dhcpcd -ABKL
 
 # Kick watchdogd if debug_level is low
 on property:ro.debug_level=0x4f4c
-    start watchdogd
+	start watchdogd
 
 # on userdebug and eng builds, enable kgdb on the serial console
 on property:ro.debuggable=1
@@ -490,10 +501,10 @@ service gpsd /system/bin/gpsd -c /system/etc/gps.xml
     ioprio be 0
 
 # MobiCore startup
-service mobicore /system/bin/mcDriverDaemon -r /system/app/FFFFFFFF000000000000000000000001.drbin -r /system/app/mcRegistry/ffffffffd0000000000000000000000a.tlbin
-    class core
-    user system
-    group system  
+#service mobicore /system/bin/mcDriverDaemon -r /system/app/FFFFFFFF000000000000000000000001.drbin -r /system/app/mcRegistry/ffffffffd0000000000000000000000a.tlbin
+#    class core
+#    user system
+#    group system    
 
 #Private Mode
 service privatemode /system/bin/sdcard /data/privatemode /mnt/shell/privatemode 1000 1000
@@ -503,7 +514,6 @@ service privatemode /system/bin/sdcard /data/privatemode /mnt/shell/privatemode 
 # LPM
 on property:ro.bootmode=charger
     mount ext4 /dev/block/mmcblk0p18 /system wait ro
-    copy /system/etc/battery_charging_temp.data /sys/class/power_supply/battery/batt_temp_table
 
 on property:ro.bootmode=charger
     class_start sec-charger
@@ -513,42 +523,47 @@ service playlpm /system/bin/lpm
     critical
 
 # service for TZPR provisioning version check app
-service scranton_RD /system/bin/scranton_RD
-     class main
-     user root
-     disabled
-     oneshot
+#service scranton_RD /system/bin/scranton_RD
+#     class main
+#     user root
+#     disabled
+#     oneshot
 
 # start for TZPR provisioning version check app
-on property:sys.mobicoredaemon.enable=true
-    start scranton_RD
+#on property:sys.mobicoredaemon.enable=true
+#    start scranton_RD
 
 # Secure Storage startup
-service secure_storage /system/bin/secure_storage_daemon
-    class core
-    user system
-    group system
-    disabled
+#service secure_storage /system/bin/secure_storage_daemon
+#    class core
+#    user system
+#    group system
+#    disabled
 
 # SENSOR FRAMEWORK : starts fingerprintService
-service vcsFPService /system/bin/vcsFPService
-    class late_start
-    user system
-    group system
+#service vcsFPService /system/bin/vcsFPService
+#    class late_start
+#    user system
+#    group system
 
-on property:ro.securestorage.support=true
-    mkdir /dev/.secure_storage
-    chmod 0711 /dev/.secure_storage
-    chown system system /dev/.secure_storage
-    restorecon -R /dev/.secure_storage
-    start secure_storage
+#on property:ro.securestorage.support=true
+#    mkdir /dev/.secure_storage
+#    chmod 0711 /dev/.secure_storage
+#    chown system system /dev/.secure_storage
+#    restorecon -R /dev/.secure_storage
+#    start secure_storage
+# Modem Logging daemon
+#service ML-daemon /system/bin/mlexe
+#    class main
+#    user root
+#    group system radio inet net_raw
 
 # CS service
-service cs_service /system/bin/cs
-    class main
-    user system
-    group system
-    disabled
+#service cs_service /system/bin/cs
+#    class main
+#    user system
+#    group system
+#    disabled
 
 service TvoutService_C /system/bin/bintvoutservice
      class main
@@ -557,29 +572,29 @@ service TvoutService_C /system/bin/bintvoutservice
 on property:ro.SecEDS.enable=false
     stop TvoutService_C
 
-on property:sys.mobicoredaemon.enable=true
-    start cs_service
+#on property:sys.mobicoredaemon.enable=true
+#    start cs_service
 
 # umount service
-service umount_service /system/bin/umount /preload
-    disabled
-    oneshot
-    
-# Support Preload install apks
-on property:persist.sys.storage_preload=1
-    mount ext4 /dev/block/mmcblk0p20 /preload nosuid nodev ro barrier=1
-    setprop storage.preload.complete 1
+#service umount_service /system/bin/umount /preload
+#    disabled
+#    oneshot
 
-on property:persist.sys.storage_preload=0
-    start umount_service
+# Support Preload install apks
+#on property:persist.sys.storage_preload=1
+#    mount ext4 /dev/block/platform/dw_mmc.0/by-name/HIDDEN /preload nosuid nodev ro barrier=1
+#    setprop storage.preload.complete 1
+
+#on property:persist.sys.storage_preload=0
+#    start umount_service
 
 # SSWAP
-service swapon /sbin/sswap -s
-    class core
-    user root
-    group root
-    seclabel u:r:sswap:s0
-    oneshot
+#service swapon /sbin/sswap -s
+#    class core
+#    user root
+#    group root
+#    seclabel u:r:sswap:s0
+#    oneshot
 
 # IR LED
 on property:sys.boot_completed=1
